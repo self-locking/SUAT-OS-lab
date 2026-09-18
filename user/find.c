@@ -24,6 +24,7 @@ void find(char *path, char *name, int exec_flag, char *exec_argv[]) {
 	int fd;
 	struct dirent de;
 	struct stat st;
+	static int failed = 0;
 
 	if ((fd = open(path, O_RDONLY)) < 0) {
 		fprintf(2, "find: cannot open %s\n", path);
@@ -53,7 +54,10 @@ void find(char *path, char *name, int exec_flag, char *exec_argv[]) {
 					argv[i] = 0;
 					exec(exec_argv[0], argv);
 					// 正常不会运行到这
-					printf("find: exec failed for %s\n", exec_argv[0]);
+					if (failed == 0) {
+						printf("find: exec failed for %s\n", exec_argv[0]);
+						failed = 1;
+					}
 				}
 				else if (pid < 0) { 
 					fprintf(2, "find: fork failed\n");
