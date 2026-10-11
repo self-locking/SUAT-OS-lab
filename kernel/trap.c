@@ -29,6 +29,44 @@ trapinithart(void)
   w_stvec((uint64)kernelvec);
 }
 
+void
+print_trapframe(struct trapframe *tf)
+{
+  printk("epc = 0x%lx\n", tf->epc);
+
+  printk("ra  = 0x%lx  sp  = 0x%lx  gp  = 0x%lx\n",
+         tf->ra, tf->sp, tf->gp);
+
+  printk("tp  = 0x%lx  t0  = 0x%lx  t1  = 0x%lx\n",
+         tf->tp, tf->t0, tf->t1);
+
+  printk("t2  = 0x%lx  t3  = 0x%lx  t4  = 0x%lx\n",
+         tf->t2, tf->t3, tf->t4);
+
+  printk("t5  = 0x%lx  t6  = 0x%lx  s0  = 0x%lx\n",
+         tf->t5, tf->t6, tf->s0);
+
+  printk("s1  = 0x%lx  s2  = 0x%lx  s3  = 0x%lx\n",
+         tf->s1, tf->s2, tf->s3);
+
+  printk("s4  = 0x%lx  s5  = 0x%lx  s6  = 0x%lx\n",
+         tf->s4, tf->s5, tf->s6);
+
+  printk("s7  = 0x%lx  s8  = 0x%lx  s9  = 0x%lx\n",
+         tf->s7, tf->s8, tf->s9);
+
+  printk("s10 = 0x%lx  s11 = 0x%lx  a0  = 0x%lx\n",
+         tf->s10, tf->s11, tf->a0);
+
+  printk("a1  = 0x%lx  a2  = 0x%lx  a3  = 0x%lx\n",
+         tf->a1, tf->a2, tf->a3);
+
+  printk("a4  = 0x%lx  a5  = 0x%lx  a6  = 0x%lx\n",
+         tf->a4, tf->a5, tf->a6);
+
+  printk("a7  = 0x%lx\n", tf->a7);
+}
+
 //
 // handle an interrupt, exception, or system call from user space.
 // called from, and returns to, trampoline.S
@@ -66,6 +104,20 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if (r_scause() == 2) {
+    // lab instruction
+    uint32 buf;
+    int result = copyin(p->pagetable, p->sz, (char *)&buf, p->trapframe->epc, 4);
+    if (result == 0 && buf == 0x0000000b) {
+      print_trapframe(p->trapframe);
+      p->trapframe->a0 = cpuid();
+      p->trapframe->epc += 4;
+    }
+    else {
+      printk("usertrap(): unexpected scause 0x%lx pid=%d\n", r_scause(), p->pid);
+      printk("            sepc=0x%lx stval=0x%lx\n", r_sepc(), r_stval());
+      setkilled(p);
+    }
   } else if ((which_dev = devintr()) != 0) {
     // ok
   } else if ((r_scause() == 15 || r_scause() == 13) &&

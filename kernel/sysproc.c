@@ -110,3 +110,10 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_poweroff(void)
+{
+  testwrite(0x5555);
+  return 0;
+}
