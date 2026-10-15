@@ -26,6 +26,7 @@ int pause(int);
 int uptime(void);
 int sync(void);
 int poweroff(void);
+int yield(void);
 
 // ulib.c
 int stat(const char *, struct stat *);

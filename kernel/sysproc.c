@@ -117,3 +117,10 @@ sys_poweroff(void)
   testwrite(0x5555);
   return 0;
 }
+
+uint64
+sys_yield(void)
+{
+  yield();
+  return 0;
+}
